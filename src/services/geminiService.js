@@ -1,5 +1,5 @@
 // Servicio para comunicación con Backend Java Spring Boot
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Envía un mensaje al backend Java
