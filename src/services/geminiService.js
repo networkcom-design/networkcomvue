@@ -1,6 +1,10 @@
 // Servicio para comunicación con Backend Java Spring Boot
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+if (!API_BASE_URL) {
+  console.error('❌ ERROR: VITE_API_URL no está definida');
+  console.error('Revisa las variables de entorno en Vercel');
+}
 /**
  * Envía un mensaje al backend Java
  * @param {string} userMessage - Mensaje del usuario
