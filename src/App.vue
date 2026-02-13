@@ -35,7 +35,10 @@ const toggleMenu = () => {
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   console.log('🚀 NetworkcoM Vue.js cargado correctamente')
-  console.log('🔌 Conectando con backend: http://localhost:8080/api/chat')
+  
+  // Mostrar la URL del backend que se está usando
+  const apiUrl = import.meta.env.VITE_API_URL || 'No configurada'
+  console.log('🔌 Conectando con backend:', `${apiUrl}/api/chat`)
 })
 
 onUnmounted(() => {
