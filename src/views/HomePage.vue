@@ -35,18 +35,12 @@ const services = ref([
   },
   {
     id: 4,
-    icon: '📊',
-    title: 'Análisis de Datos con IA',
-    description: 'Procesamiento y extracción de insights usando modelos avanzados.'
-  },
-  {
-    id: 5,
     icon: '🛡️',
     title: 'Sistemas Seguros',
     description: 'Infraestructura protegida con las mejores prácticas de seguridad.'
   },
   {
-    id: 6,
+    id: 5,
     icon: '🚀',
     title: 'Escalabilidad',
     description: 'Soluciones diseñadas para crecer con tu negocio.'
