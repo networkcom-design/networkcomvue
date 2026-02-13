@@ -22,7 +22,6 @@ INSTRUCCIONES:
 - Si quieren contacto: "Completa el <a href='#contacto' style='color: #00ff88;'>Formulario</a>."`
   
   try {
-    // ❌ ERROR: Usabas backticks (`) en lugar de paréntesis ()
     const response = await fetch(`${API_BASE_URL}/api/chat/message`, {
       method: 'POST',
       headers: { 
@@ -30,7 +29,7 @@ INSTRUCCIONES:
       },
       body: JSON.stringify({
         message: userMessage,
-        context: contextoEmpresa
+        context: contextoEmpresa  // ✅ Tu backend SÍ acepta este campo
       })
     })
     
@@ -42,7 +41,6 @@ INSTRUCCIONES:
       if (response.status === 400) {
         throw new Error('Mensaje inválido o demasiado largo (máx 2000 caracteres)')
       }
-      // ❌ ERROR: Usabas backticks en lugar de paréntesis
       throw new Error(`Error del servidor: ${response.status}`)
     }
     
@@ -61,7 +59,6 @@ INSTRUCCIONES:
     
     // Mensajes de error más amigables
     if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-      // ❌ ERROR: Usabas backticks en lugar de paréntesis
       throw new Error(`No se puede conectar con el servidor. Verifica que el backend esté corriendo en ${API_BASE_URL}`)
     }
     
@@ -75,7 +72,6 @@ INSTRUCCIONES:
  */
 export async function checkBackendHealth() {
   try {
-    // ❌ ERROR: Usabas backticks en lugar de paréntesis
     const response = await fetch(`${API_BASE_URL}/api/chat/health`)
     return response.ok
   } catch (error) {
