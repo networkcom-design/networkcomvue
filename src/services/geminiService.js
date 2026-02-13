@@ -16,8 +16,8 @@ if (!import.meta.env.VITE_API_URL) {
 // 🔹 Endpoint base centralizado
 const CHAT_ENDPOINT = `${API_BASE_URL}/api/chat`;
 
-// 🔹 Timeout global para requests (15s)
-const REQUEST_TIMEOUT = 15000;
+// 🔹 Timeout global para requests (60s - Render free tier se duerme)
+const REQUEST_TIMEOUT = 60000;
 
 /**
  * Función interna para hacer fetch con timeout
@@ -69,6 +69,8 @@ INSTRUCCIONES:
 `;
 
   try {
+    console.log('📤 Enviando mensaje al backend...');
+    
     const response = await fetchWithTimeout(`${CHAT_ENDPOINT}/message`, {
       method: 'POST',
       headers: {
@@ -79,6 +81,8 @@ INSTRUCCIONES:
         context: contextoEmpresa
       })
     });
+
+    console.log('📥 Respuesta recibida:', response.status);
 
     // 🔹 Manejo de errores HTTP
     if (!response.ok) {
@@ -116,7 +120,7 @@ INSTRUCCIONES:
 
     // Timeout
     if (error.name === 'AbortError') {
-      throw new Error('El servidor tardó demasiado en responder. Intenta nuevamente.');
+      throw new Error('⏱️ El servidor está iniciando (esto puede tardar hasta 1 minuto la primera vez). Por favor, intenta nuevamente.');
     }
 
     // Network errors
@@ -135,13 +139,16 @@ INSTRUCCIONES:
  */
 export async function checkBackendHealth() {
   try {
+    console.log('🏥 Verificando salud del backend...');
+    
     const response = await fetchWithTimeout(`${CHAT_ENDPOINT}/health`, {
       method: 'GET'
-    }, 5000); // 5 segundos de timeout para health check
+    }, 60000); // 60 segundos para despertar el servicio
 
+    console.log('✅ Backend respondió:', response.ok);
     return response.ok;
   } catch (error) {
-    console.error('❌ Backend no disponible:', error);
+    console.warn('⚠️ Backend no disponible (puede estar iniciando):', error.message);
     return false;
   }
 }
