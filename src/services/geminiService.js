@@ -119,4 +119,5 @@ INSTRUCCIONES:
       throw new Error('El servidor tardó demasiado en responder. Intenta nuevamente.');
     }
 
-    // Error de conexión (CORS / servidor caí
+  }
+}
