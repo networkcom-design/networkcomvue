@@ -4,13 +4,13 @@
 // ===============================================
 
 // 🔹 Base URL desde variables de entorno
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://siscentral-1.onrender.com';
 
-// Validar configuración obligatoria
-if (!API_BASE_URL) {
-  throw new Error(
-    '❌ VITE_API_URL no está definida. Configúrala en Vercel (Settings → Environment Variables)'
-  );
+// Logging para debug
+console.log('🔌 API_BASE_URL configurada:', API_BASE_URL);
+
+if (!import.meta.env.VITE_API_URL) {
+  console.warn('⚠️ ADVERTENCIA: VITE_API_URL no definida, usando fallback a Render');
 }
 
 // 🔹 Endpoint base centralizado
@@ -119,5 +119,29 @@ INSTRUCCIONES:
       throw new Error('El servidor tardó demasiado en responder. Intenta nuevamente.');
     }
 
+    // Network errors
+    if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+      throw new Error(`No se puede conectar con el servidor en ${API_BASE_URL}`);
+    }
+
+    // Re-lanzar el error para que el componente lo maneje
+    throw error;
+  }
+}
+
+/**
+ * Verifica el estado del backend
+ * @returns {Promise<boolean>} - true si el backend está disponible
+ */
+export async function checkBackendHealth() {
+  try {
+    const response = await fetchWithTimeout(`${CHAT_ENDPOINT}/health`, {
+      method: 'GET'
+    }, 5000); // 5 segundos de timeout para health check
+
+    return response.ok;
+  } catch (error) {
+    console.error('❌ Backend no disponible:', error);
+    return false;
   }
 }
