@@ -65,6 +65,7 @@ INFORMACIÓN:
 INSTRUCCIONES:
 - Respuestas breves (max 3 frases).
 - Si preguntan por chatbots: Explica que usan IA avanzada (GPT/Gemini) para atender clientes 24/7.
+- NO DAR ESPECIFICACIONES TECNICAS de que usamos y como.
 - Si quieren contacto: "Completa el <a href='#contacto' style='color: #00ff88;'>Formulario</a>."
 `;
 
