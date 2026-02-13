@@ -5,6 +5,7 @@ if (!API_BASE_URL) {
   console.error('❌ ERROR: VITE_API_URL no está definida');
   console.error('Revisa las variables de entorno en Vercel');
 }
+
 /**
  * Envía un mensaje al backend Java
  * @param {string} userMessage - Mensaje del usuario
@@ -21,6 +22,7 @@ INSTRUCCIONES:
 - Si quieren contacto: "Completa el <a href='#contacto' style='color: #00ff88;'>Formulario</a>."`
   
   try {
+    // ❌ ERROR: Usabas backticks (`) en lugar de paréntesis ()
     const response = await fetch(`${API_BASE_URL}/api/chat/message`, {
       method: 'POST',
       headers: { 
@@ -40,6 +42,7 @@ INSTRUCCIONES:
       if (response.status === 400) {
         throw new Error('Mensaje inválido o demasiado largo (máx 2000 caracteres)')
       }
+      // ❌ ERROR: Usabas backticks en lugar de paréntesis
       throw new Error(`Error del servidor: ${response.status}`)
     }
     
@@ -58,6 +61,7 @@ INSTRUCCIONES:
     
     // Mensajes de error más amigables
     if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+      // ❌ ERROR: Usabas backticks en lugar de paréntesis
       throw new Error(`No se puede conectar con el servidor. Verifica que el backend esté corriendo en ${API_BASE_URL}`)
     }
     
@@ -71,6 +75,7 @@ INSTRUCCIONES:
  */
 export async function checkBackendHealth() {
   try {
+    // ❌ ERROR: Usabas backticks en lugar de paréntesis
     const response = await fetch(`${API_BASE_URL}/api/chat/health`)
     return response.ok
   } catch (error) {
