@@ -12,7 +12,16 @@
   <title>NetworkcoM - Sistemas Inteligentes</title>
 </head>
 <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+  <!-- Fallback para bots que no ejecutan JS -->
+  <noscript>
+    <div style="font-family:sans-serif; padding:2rem; text-align:center">
+      <h1>NetworkcoM - Sistemas Inteligentes</h1>
+      <p>Chatbots con IA, Automatización RPA e Integraciones API para empresas en Argentina.</p>
+      <p>Para ver el sitio completo, por favor habilitá JavaScript en tu navegador.</p>
+    </div>
+  </noscript>
+
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
