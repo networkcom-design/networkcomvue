@@ -3,15 +3,18 @@
     <h2 class="section-title">Contacto</h2>
     <div class="contact-container">
       <div class="contact-form">
-        
-        <p>Completá el formulario de contacto haciendo clic en el botón:</p>
-        <a
-            href="https://docs.google.com/forms/d/e/1FAIpQLSdoMGR5J3K2Nb2yzMlSeq5_5HWXVHojY8TwCTPCRmvnUwXXMw/viewform"
-            target="_blank"
-            class="btn btn-primary"
-          >
-            Abrir formulario de contacto
-        </a>
+        <p>Completá el formulario de contacto:</p>
+      
+        <iframe
+          src="https://docs.google.com/forms/d/e/1FAIpQLSdoMGR5J3K2Nb2yzMlSeq5_5HWXVHojY8TwCTPCRmvnUwXXMw/viewform?embedded=true"
+          width="100%"
+          height="800"
+          frameborder="0"
+          marginheight="0"
+          marginwidth="0"
+        >
+          Cargando…
+        </iframe>
       </div>
     </div>
   </section>
@@ -25,7 +28,13 @@
 section {
   padding: 5rem 5%;
 }
-
+iframe {
+  width: 100%;
+  min-height: 700px;
+  border: none;
+  border-radius: 15px;
+  background: white;
+}
 .section-title {
   text-align: center;
   font-size: 3rem;
