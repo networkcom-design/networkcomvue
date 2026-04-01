@@ -4,14 +4,7 @@
     <div class="contact-container">
       <div class="contact-form">
         <!-- 👇 Reemplaza con la URL de tu formulario -->
-        <iframe 
-          src="https://docs.google.com/forms/d/e/1FAIpQLSdoMGR5J3K2Nb2yzMlSeq5_5HWXVHojY8TwCTPCRmvnUwXXMw/viewform?embedded=true"
-          width="100%" 
-          height="900" 
-          frameborder="0" 
-          marginheight="0" 
-          marginwidth="0"
-        >
+       <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdoMGR5J3K2Nb2yzMlSeq5_5HWXVHojY8TwCTPCRmvnUwXXMw/viewform?embedded=true" width="640" height="826" frameborder="0" marginheight="0" marginwidth="0">Cargando…</iframe>
           Cargando formulario...
         </iframe>
       </div>
