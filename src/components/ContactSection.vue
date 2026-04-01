@@ -8,7 +8,7 @@
           ✅ ¡Mensaje enviado! Te contactaremos a la brevedad.
         </div>
         <div v-if="submitStatus === 'error'" class="feedback feedback-error">
-          ⚠️ Hubo un error al enviar. Por favor, intentá de nuevo.
+          ⚠️ No se pudo enviar el mensaje. Por favor, intentá de nuevo.
         </div>
 
         <div class="form-group">
@@ -24,7 +24,7 @@
         </div>
 
         <div class="form-group">
-          <label for="contact-email">Email</label>
+          <label for="contact-email">Correo electrónico</label>
           <input
             id="contact-email"
             v-model="form.email"
@@ -36,15 +36,27 @@
         </div>
 
         <div class="form-group">
-          <label for="contact-message">Mensaje</label>
+          <label for="contact-phone">Número de teléfono</label>
+          <input
+            id="contact-phone"
+            v-model="form.phone"
+            type="tel"
+            placeholder="Ej: +54 362 412 3456"
+            :class="{ 'input-error': errors.phone }"
+          />
+          <span v-if="errors.phone" class="error-msg">{{ errors.phone }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="contact-service">Solicitud de Servicio</label>
           <textarea
-            id="contact-message"
-            v-model="form.message"
+            id="contact-service"
+            v-model="form.service"
             rows="5"
             placeholder="¿En qué podemos ayudarte?"
-            :class="{ 'input-error': errors.message }"
+            :class="{ 'input-error': errors.service }"
           ></textarea>
-          <span v-if="errors.message" class="error-msg">{{ errors.message }}</span>
+          <span v-if="errors.service" class="error-msg">{{ errors.service }}</span>
         </div>
 
         <button
@@ -54,6 +66,7 @@
         >
           {{ isSubmitting ? 'Enviando...' : 'Enviar Mensaje' }}
         </button>
+
       </div>
     </div>
   </section>
@@ -62,49 +75,46 @@
 <script setup>
 import { ref, reactive } from 'vue'
 
-const emit = defineEmits(['submit'])
+const FORM_ACTION    = 'https://docs.google.com/forms/d/e/1FAIpQLSdoMGR5J3K2Nb2yzMlSeq5_5HWXVHojY8TwCTPCRmvnUwXXMw/formResponse'
+const ENTRY_NOMBRE   = 'entry.2005620554'
+const ENTRY_EMAIL    = 'entry.1045781291'
+const ENTRY_TELEFONO = 'entry.1166974658'
+const ENTRY_SERVICIO = 'entry.839337160'
 
-const form = reactive({
-  name: '',
-  email: '',
-  message: ''
-})
-
-const errors = reactive({
-  name: '',
-  email: '',
-  message: ''
-})
-
+const form = reactive({ name: '', email: '', phone: '', service: '' })
+const errors = reactive({ name: '', email: '', phone: '', service: '' })
 const isSubmitting = ref(false)
-const submitStatus = ref(null) // null | 'success' | 'error'
+const submitStatus = ref(null)
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const validate = () => {
-  errors.name = ''
-  errors.email = ''
-  errors.message = ''
+  errors.name    = ''
+  errors.email   = ''
+  errors.phone   = ''
+  errors.service = ''
   let valid = true
 
   if (!form.name.trim()) {
     errors.name = 'El nombre es obligatorio.'
     valid = false
   }
-
   if (!form.email.trim()) {
-    errors.email = 'El email es obligatorio.'
+    errors.email = 'El correo es obligatorio.'
     valid = false
   } else if (!EMAIL_REGEX.test(form.email.trim())) {
-    errors.email = 'Ingresá un email válido.'
+    errors.email = 'Ingresá un correo válido.'
     valid = false
   }
-
-  if (!form.message.trim()) {
-    errors.message = 'El mensaje es obligatorio.'
+  if (!form.phone.trim()) {
+    errors.phone = 'El teléfono es obligatorio.'
     valid = false
-  } else if (form.message.trim().length < 10) {
-    errors.message = 'El mensaje debe tener al menos 10 caracteres.'
+  }
+  if (!form.service.trim()) {
+    errors.service = 'La solicitud es obligatoria.'
+    valid = false
+  } else if (form.service.trim().length < 10) {
+    errors.service = 'Describí tu solicitud con al menos 10 caracteres.'
     valid = false
   }
 
@@ -118,18 +128,23 @@ const submitForm = async () => {
   isSubmitting.value = true
 
   try {
-    emit('submit', {
-      name: form.name.trim(),
-      email: form.email.trim(),
-      message: form.message.trim()
+    const body = new FormData()
+    body.append(ENTRY_NOMBRE,   form.name.trim())
+    body.append(ENTRY_EMAIL,    form.email.trim())
+    body.append(ENTRY_TELEFONO, form.phone.trim())
+    body.append(ENTRY_SERVICIO, form.service.trim())
+
+    await fetch(FORM_ACTION, {
+      method: 'POST',
+      mode: 'no-cors',
+      body
     })
 
-    await new Promise(resolve => setTimeout(resolve, 600))
-
     submitStatus.value = 'success'
-    form.name = ''
-    form.email = ''
-    form.message = ''
+    form.name    = ''
+    form.email   = ''
+    form.phone   = ''
+    form.service = ''
   } catch {
     submitStatus.value = 'error'
   } finally {
@@ -140,13 +155,13 @@ const submitForm = async () => {
 
 <style scoped>
 section {
-  padding: 2rem;
+  padding: 5rem 5%;
 }
 
 .section-title {
   text-align: center;
   font-size: 3rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   background: linear-gradient(135deg, #00ff88, #00ccff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
