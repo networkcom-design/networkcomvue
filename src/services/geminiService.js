@@ -1,155 +1,67 @@
-// ===============================================
-// Servicio de comunicación con Backend Spring Boot
-// Optimizado para producción (Vercel + Java)
-// ===============================================
-
-// 🔹 Base URL desde variables de entorno
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://siscentral-1.onrender.com';
-
-// Logging para debug
-console.log('🔌 API_BASE_URL configurada:', API_BASE_URL);
-
-if (!import.meta.env.VITE_API_URL) {
-  console.warn('⚠️ ADVERTENCIA: VITE_API_URL no definida, usando fallback a Render');
-}
-
-// 🔹 Endpoint base centralizado
-const CHAT_ENDPOINT = `${API_BASE_URL}/api/chat`;
-
-// 🔹 Timeout global para requests (60s - Render free tier se duerme)
-const REQUEST_TIMEOUT = 60000;
+// Servicio para comunicación con Backend Java Spring Boot
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 /**
- * Función interna para hacer fetch con timeout
- */
-async function fetchWithTimeout(url, options = {}, timeout = REQUEST_TIMEOUT) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
-}
-
-/**
- * Envía un mensaje al backend Java
+ * Envía un mensaje al backend Java.
+ * NOTA: El contexto/prompt del sistema debe manejarse en el backend,
+ * no en el frontend. Aquí solo enviamos el mensaje del usuario.
+ *
  * @param {string} userMessage - Mensaje del usuario
  * @returns {Promise<string>} - Respuesta del chatbot
  */
 export async function sendChatMessage(userMessage) {
-
-  // 🔹 Validaciones previas (mejor UX)
-  if (!userMessage?.trim()) {
-    throw new Error('El mensaje no puede estar vacío');
-  }
-
-  if (userMessage.length > 2000) {
-    throw new Error('El mensaje excede el máximo permitido (2000 caracteres)');
-  }
-
-  // 🔹 Contexto empresarial
-  const contextoEmpresa = `
-ACTÚA COMO: Asistente virtual experto de "NetworkcoM".
-TU OBJETIVO: Vender servicios de automatización e IA.
-INFORMACIÓN:
-- Somos NetworkcoM. Hacemos chatbots, automatización (RPA) e integraciones API.
-INSTRUCCIONES:
-- Respuestas breves (max 3 frases).
-- Si preguntan por chatbots: Explica que usan IA avanzada (GPT/Gemini) para atender clientes 24/7.
-- NO DAR ESPECIFICACIONES TECNICAS de que usamos y como.
-- Si quieren contacto: "Completa el <a href='#contacto' style='color: #00ff88;'>Formulario</a>."
-`;
-
   try {
-    console.log('📤 Enviando mensaje al backend...');
-    
-    const response = await fetchWithTimeout(`${CHAT_ENDPOINT}/message`, {
+    const response = await fetch(`${API_BASE_URL}/api/chat/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        message: userMessage.trim(),
-        context: contextoEmpresa
+        message: userMessage
+        // El contexto/sistema prompt va configurado en el backend,
+        // no se envía desde el cliente para no exponerlo.
       })
-    });
+    })
 
-    console.log('📥 Respuesta recibida:', response.status);
-
-    // 🔹 Manejo de errores HTTP
     if (!response.ok) {
       if (response.status === 503) {
-        throw new Error('El servicio de IA está temporalmente no disponible');
+        throw new Error('El servicio de IA está temporalmente no disponible.')
       }
-
       if (response.status === 400) {
-        throw new Error('Mensaje inválido o demasiado largo (máx 2000 caracteres)');
+        throw new Error('Mensaje inválido o demasiado largo (máx. 2000 caracteres).')
       }
-
-      if (response.status === 500) {
-        throw new Error('Error interno del servidor. Intenta nuevamente.');
-      }
-
-      throw new Error(`Error del servidor: ${response.status}`);
+      throw new Error('Ocurrió un error en el servidor. Por favor, intentá más tarde.')
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
-    // 🔹 Validación estructura esperada (ChatResponse)
-    if (!data?.success) {
-      throw new Error(data?.error || 'Error procesando el mensaje');
+    if (!data.success) {
+      throw new Error(data.error || 'Error procesando el mensaje.')
     }
 
-    if (!data?.reply) {
-      throw new Error('Respuesta inválida del servidor');
-    }
-
-    return data.reply;
+    return data.reply
 
   } catch (error) {
-
-    console.error('❌ Error en la llamada al backend:', error);
-
-    // Timeout
-    if (error.name === 'AbortError') {
-      throw new Error('⏱️ El servidor está iniciando (esto puede tardar hasta 1 minuto la primera vez). Por favor, intenta nuevamente.');
+    // No exponer la URL interna al usuario
+    if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+      throw new Error('No se puede conectar con el servidor. Por favor, intentá más tarde.')
     }
 
-    // Network errors
-    if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-      throw new Error(`No se puede conectar con el servidor en ${API_BASE_URL}`);
-    }
-
-    // Re-lanzar el error para que el componente lo maneje
-    throw error;
+    throw error
   }
 }
 
 /**
- * Verifica el estado del backend
+ * Verifica el estado del backend.
  * @returns {Promise<boolean>} - true si el backend está disponible
  */
 export async function checkBackendHealth() {
   try {
-    console.log('🏥 Verificando salud del backend...');
-    
-    const response = await fetchWithTimeout(`${CHAT_ENDPOINT}/health`, {
-      method: 'GET'
-    }, 60000); // 60 segundos para despertar el servicio
-
-    console.log('✅ Backend respondió:', response.ok);
-    return response.ok;
-  } catch (error) {
-    console.warn('⚠️ Backend no disponible (puede estar iniciando):', error.message);
-    return false;
+    const response = await fetch(`${API_BASE_URL}/api/chat/health`, {
+      signal: AbortSignal.timeout(5000)
+    })
+    return response.ok
+  } catch {
+    return false
   }
 }

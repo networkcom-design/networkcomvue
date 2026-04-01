@@ -2,12 +2,12 @@
   <section id="servicios">
     <h2 class="section-title">Nuestros Servicios</h2>
     <div class="services-grid">
-      <div 
-        v-for="service in services" 
-        :key="service.id" 
+      <div
+        v-for="service in services"
+        :key="service.id"
         class="service-card"
       >
-        <span class="service-icon">{{ service.icon }}</span>
+        <span class="service-icon" aria-hidden="true">{{ service.icon }}</span>
         <h3>{{ service.title }}</h3>
         <p>{{ service.description }}</p>
       </div>
@@ -26,13 +26,13 @@ defineProps({
 
 <style scoped>
 section {
-  padding: 5rem 5%;
+  padding: 2rem;
 }
 
 .section-title {
   text-align: center;
   font-size: 3rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   background: linear-gradient(135deg, #00ff88, #00ccff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

@@ -5,7 +5,7 @@
       <h1>NetworkcoM</h1>
       <h2>Integración de LLMs y Automatizaciones Inteligentes</h2>
       <p>
-        Transformamos procesos empresariales integrando los mejores modelos de lenguaje 
+        Transformamos procesos empresariales integrando los mejores modelos de lenguaje
         (ChatGPT, Claude, Gemini) y automatizaciones avanzadas.
       </p>
       <div class="cta-buttons">
@@ -18,13 +18,13 @@
 
 <style scoped>
 .hero {
-  min-height: 100vh;
+  min-height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  padding: 0 5%;
+  padding: 0 2%;
 }
 
 .circuit-bg {
@@ -33,7 +33,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: 
+  background:
     linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,20,40,0.8) 100%),
     repeating-linear-gradient(90deg, transparent 0px, transparent 50px, rgba(0,255,255,0.03) 50px, rgba(0,255,255,0.03) 51px),
     repeating-linear-gradient(0deg, transparent 0px, transparent 50px, rgba(0,255,255,0.03) 50px, rgba(0,255,255,0.03) 51px);
@@ -131,7 +131,7 @@
   .hero h1 {
     font-size: 2.5rem;
   }
-  
+
   .cta-buttons {
     flex-direction: column;
   }

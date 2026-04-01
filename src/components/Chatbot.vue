@@ -1,27 +1,28 @@
 <template>
   <div>
-    <button class="chat-toggle" @click="toggleChat">💬</button>
-    
-    <!-- Indicador de estado del backend -->
+    <button class="chat-toggle" @click="toggleChat" :aria-label="isOpen ? 'Cerrar chat' : 'Abrir chat'">
+      💬
+    </button>
+
     <div v-if="isOpen && !backendAvailable" class="backend-warning">
-      ⚠️ Backend no disponible
+      ⚠️ Chat temporalmente no disponible
     </div>
-    
-    <div v-if="isOpen" class="chat-window">
+
+    <div v-if="isOpen" class="chat-window" role="dialog" aria-label="Chat con NetworkcoM">
       <div class="chat-header">
         <span>Chat con NetworkcoM</span>
-        <span class="chat-close" @click="toggleChat">✕</span>
+        <span class="chat-close" @click="toggleChat" role="button" aria-label="Cerrar">✕</span>
       </div>
-      
+
       <div ref="messagesContainer" class="chat-messages" @click="handleLinkClick">
-        <div 
-          v-for="msg in messages" 
+        <div
+          v-for="msg in messages"
           :key="msg.timestamp"
           class="message"
           :class="msg.sender === 'user' ? 'message-user' : 'message-bot'"
           v-html="msg.text"
         ></div>
-        
+
         <div v-if="isLoading" class="message message-bot">
           <div class="typing-indicator">
             <span></span>
@@ -30,19 +31,20 @@
           </div>
         </div>
       </div>
-      
+
       <div class="chat-input-container">
-        <input 
+        <input
           v-model="inputText"
           @keypress.enter="sendMessage"
           :disabled="isLoading || !backendAvailable"
-          class="chat-input" 
-          type="text" 
-          :placeholder="backendAvailable ? 'Escribe tu mensaje...' : 'Backend no disponible'"
-        >
-        <button 
-          @click="sendMessage" 
-          :disabled="isLoading || !backendAvailable"
+          class="chat-input"
+          type="text"
+          :placeholder="backendAvailable ? 'Escribí tu mensaje...' : 'Chat no disponible'"
+          maxlength="2000"
+        />
+        <button
+          @click="sendMessage"
+          :disabled="isLoading || !backendAvailable || !inputText.trim()"
           class="chat-send"
         >
           {{ isLoading ? '...' : 'Enviar' }}
@@ -56,6 +58,16 @@
 import { ref, nextTick, onMounted } from 'vue'
 import { sendChatMessage, checkBackendHealth } from '../services/geminiService'
 
+// Sanitizador simple para prevenir XSS
+// Si instalás DOMPurify (npm install dompurify), reemplazá por:
+// import DOMPurify from 'dompurify'
+// const sanitize = (html) => DOMPurify.sanitize(html)
+const sanitize = (html) => {
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<(?!\/?(strong|em|b|i|br|a|code)\b)[^>]+>/gi, '')
+}
+
 const isOpen = ref(false)
 const messages = ref([])
 const inputText = ref('')
@@ -63,27 +75,39 @@ const isLoading = ref(false)
 const backendAvailable = ref(true)
 const messagesContainer = ref(null)
 
+const scrollToBottom = async () => {
+  await nextTick()
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
+}
+
+const pushMessage = (text, sender) => {
+  messages.value.push({
+    text: sender === 'bot' ? sanitize(text) : text,
+    sender,
+    timestamp: Date.now()
+  })
+}
+
 const toggleChat = async () => {
   isOpen.value = !isOpen.value
-  
-  // Verificar estado del backend al abrir
+
   if (isOpen.value) {
-    backendAvailable.value = await checkBackendHealth()
-    
+    // Solo re-verificar si el backend había fallado antes
     if (!backendAvailable.value) {
-      messages.value.push({
-        text: '⚠️ El servidor no está disponible. Verifica que el backend esté corriendo en <code>http://localhost:8080</code>',
-        sender: 'bot',
-        timestamp: Date.now()
-      })
-    } else if (messages.value.length === 0) {
-      // Mensaje de bienvenida
-      messages.value.push({
-        text: '👋 ¡Hola! Soy el asistente virtual de NetworkcoM. ¿En qué puedo ayudarte?',
-        sender: 'bot',
-        timestamp: Date.now()
-      })
+      backendAvailable.value = await checkBackendHealth()
     }
+
+    if (!backendAvailable.value) {
+      if (messages.value.length === 0) {
+        pushMessage('⚠️ El chat no está disponible en este momento. Por favor, intentá más tarde o escribinos por WhatsApp.', 'bot')
+      }
+    } else if (messages.value.length === 0) {
+      pushMessage('👋 ¡Hola! Soy el asistente virtual de NetworkcoM. ¿En qué puedo ayudarte?', 'bot')
+    }
+
+    await scrollToBottom()
   }
 }
 
@@ -91,93 +115,56 @@ const sendMessage = async () => {
   const text = inputText.value.trim()
   if (!text || isLoading.value || !backendAvailable.value) return
 
-  // Validar longitud (backend tiene límite de 2000)
   if (text.length > 2000) {
-    messages.value.push({
-      text: '⚠️ El mensaje es demasiado largo. Por favor, escribe menos de 2000 caracteres.',
-      sender: 'bot',
-      timestamp: Date.now()
-    })
+    pushMessage('⚠️ El mensaje es demasiado largo. Por favor, escribí menos de 2000 caracteres.', 'bot')
     return
   }
 
-  // Agregar mensaje del usuario
-  messages.value.push({
-    text: text,
-    sender: 'user',
-    timestamp: Date.now()
-  })
-
+  pushMessage(text, 'user')
   inputText.value = ''
   isLoading.value = true
+  await scrollToBottom()
 
   try {
     const reply = await sendChatMessage(text)
-    
-    messages.value.push({
-      text: reply,
-      sender: 'bot',
-      timestamp: Date.now()
-    })
+    pushMessage(reply, 'bot')
 
-    // Auto-scroll a contacto si el mensaje lo contiene
     await nextTick()
     if (reply.includes('#contacto')) {
       setTimeout(() => {
-        document.querySelector('#contacto')?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
+        document.querySelector('#contacto')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
         })
       }, 500)
     }
-
   } catch (err) {
-    let errorMessage = '⚠️ <strong>Error:</strong> '
-    
-    if (err.message.includes('conectar con el servidor')) {
-      errorMessage += 'No se puede conectar con el backend. Verifica que Spring Boot esté corriendo en <code>http://localhost:8080</code>'
+    if (err.message.includes('no disponible') || err.message.includes('conectar')) {
       backendAvailable.value = false
+      pushMessage('⚠️ No se pudo conectar con el servidor. Por favor, intentá más tarde.', 'bot')
     } else {
-      errorMessage += err.message
+      pushMessage(`⚠️ <strong>Error:</strong> ${err.message}`, 'bot')
     }
-    
-    messages.value.push({
-      text: errorMessage,
-      sender: 'bot',
-      timestamp: Date.now()
-    })
   } finally {
     isLoading.value = false
-  }
-
-  // Auto scroll al final
-  await nextTick()
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    await scrollToBottom()
   }
 }
 
 const handleLinkClick = (e) => {
-  if (e.target.tagName === 'A' && e.target.getAttribute('href')?.startsWith('#')) {
+  const anchor = e.target.closest('a')
+  if (anchor && anchor.getAttribute('href')?.startsWith('#')) {
     e.preventDefault()
-    const targetId = e.target.getAttribute('href')
-    const targetSection = document.querySelector(targetId)
-    if (targetSection) {
-      targetSection.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      })
-    }
+    const targetSection = document.querySelector(anchor.getAttribute('href'))
+    targetSection?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
 
-// Verificar backend al montar
+// Verificar backend una sola vez al montar
 onMounted(async () => {
   backendAvailable.value = await checkBackendHealth()
   if (!backendAvailable.value) {
     console.warn('⚠️ Backend no disponible al iniciar')
-  } else {
-    console.log('✅ Backend conectado correctamente')
   }
 })
 </script>
@@ -271,6 +258,7 @@ onMounted(async () => {
   border: 1px solid rgba(0, 255, 255, 0.3);
   border-radius: 10px;
   color: #fff;
+  font-family: inherit;
 }
 
 .chat-input:disabled {
@@ -304,6 +292,7 @@ onMounted(async () => {
   max-width: 85%;
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
+  word-break: break-word;
 }
 
 .message-user {
@@ -332,7 +321,6 @@ onMounted(async () => {
   animation: fadeIn 0.3s ease;
 }
 
-/* Typing indicator animation */
 .typing-indicator {
   display: flex;
   gap: 4px;
@@ -348,40 +336,24 @@ onMounted(async () => {
   animation: typing 1.4s infinite;
 }
 
-.typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
-}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes typing {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.7;
-  }
-  30% {
-    transform: translateY(-10px);
-    opacity: 1;
-  }
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
+  30% { transform: translateY(-10px); opacity: 1; }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 768px) {
   .chat-window {
     width: 90%;
     right: 5%;
+    height: 70vh;
   }
 }
 </style>
