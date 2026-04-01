@@ -69,43 +69,19 @@
 
       </div>
     </div>
-
-    <!-- iframe oculto: recibe la respuesta de Google sin CORS ni 401 -->
-    <iframe
-      ref="hiddenFrame"
-      name="hidden-iframe"
-      style="display:none"
-      aria-hidden="true"
-    ></iframe>
-
-    <!-- Formulario nativo oculto que apunta al iframe -->
-    <form
-      ref="hiddenForm"
-      :action="FORM_ACTION"
-      method="POST"
-      target="hidden-iframe"
-      style="display:none"
-    >
-      <input type="hidden" name="entry.2005620554" :value="form.name" />
-      <input type="hidden" name="entry.1045781291" :value="form.email" />
-      <input type="hidden" name="entry.1166974658" :value="form.phone" />
-      <input type="hidden" name="entry.839337160"  :value="form.service" />
-    </form>
-
   </section>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
 
-const FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSdoMGR5J3K2Nb2yzMlSeq5_5HWXVHojY8TwCTPCRmvnUwXXMw/formResponse'
+// Reemplazá con la URL que te da Apps Script al implementar
+const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL
 
 const form = reactive({ name: '', email: '', phone: '', service: '' })
 const errors = reactive({ name: '', email: '', phone: '', service: '' })
 const isSubmitting = ref(false)
 const submitStatus = ref(null)
-const hiddenForm = ref(null)
-const hiddenFrame = ref(null)
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -149,18 +125,29 @@ const submitForm = async () => {
   isSubmitting.value = true
 
   try {
-    // Enviamos via el form nativo oculto → iframe oculto
-    // Este método evita CORS y el 401 de Google Forms
-    hiddenForm.value.submit()
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      // Apps Script requiere text/plain para evitar preflight CORS
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        name:    form.name.trim(),
+        email:   form.email.trim(),
+        phone:   form.phone.trim(),
+        service: form.service.trim()
+      })
+    })
 
-    // Google no devuelve confirmación, esperamos un momento y mostramos éxito
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const result = await response.json()
 
-    submitStatus.value = 'success'
-    form.name    = ''
-    form.email   = ''
-    form.phone   = ''
-    form.service = ''
+    if (result.success) {
+      submitStatus.value = 'success'
+      form.name    = ''
+      form.email   = ''
+      form.phone   = ''
+      form.service = ''
+    } else {
+      throw new Error(result.error)
+    }
   } catch {
     submitStatus.value = 'error'
   } finally {
