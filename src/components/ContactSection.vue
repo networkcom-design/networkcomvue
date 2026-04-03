@@ -37,8 +37,7 @@
 
 <script setup>
 import { ref } from 'vue'
-
-const backendUrl = 'https://example.com/api/contact' // Cambiar a URL real del backend
+import { sendContactForm } from '../services/contactService'
 
 const form = ref({
   nombre: '',
@@ -61,17 +60,7 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
-    const response = await fetch(backendUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(form.value)
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
-    }
+    await sendContactForm(form.value)
 
     status.value = 'success'
     form.value = { nombre: '', correo: '', telefono: '', solicitud: '' }
@@ -153,7 +142,6 @@ button[type="submit"]:hover:not(:disabled) {
     padding: 1.2rem;
   }
 }
-
 
 .section-title {
   text-align: center;
