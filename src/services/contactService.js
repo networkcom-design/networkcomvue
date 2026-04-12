@@ -21,7 +21,7 @@ export async function sendContactForm(payload) {
       },
       body: JSON.stringify(payload)
     })
-
+    console.log("response",response);
     if (!response.ok) {
       if (response.status === 400) {
         throw new Error('Los datos del formulario no son válidos.')
