@@ -18,8 +18,6 @@ export async function sendChatMessage(userMessage) {
       },
       body: JSON.stringify({
         message: userMessage
-        // El contexto/sistema prompt va configurado en el backend,
-        // no se envía desde el cliente para no exponerlo.
       })
     })
 
