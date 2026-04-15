@@ -7,18 +7,18 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
  * no en el frontend. Aquí solo enviamos el mensaje del usuario.
  *
  * @param {string} userMessage - Mensaje del usuario
- * @returns {Promise<string>} - Respuesta del chatbot
+ * Respuesta REST esperada (200): { "reply": string }
+ * @returns {Promise<string>} - Texto en data.reply
  */
 export async function sendChatMessage(userMessage) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/chat/message`, {
       method: 'POST',
       headers: {
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        message: userMessage
-      })
+      body: JSON.stringify({message: userMessage})
     })
 
     if (!response.ok) {
@@ -31,16 +31,15 @@ export async function sendChatMessage(userMessage) {
       throw new Error('Ocurrió un error en el servidor. Por favor, intentá más tarde.')
     }
 
-    const data = await response.json()
+    const data = await response.json().catch(() => ({}))
 
-    if (!data.success) {
-      throw new Error(data.error || 'Error procesando el mensaje.')
+    if (typeof data?.reply !== 'string' || !data.reply.trim()) {
+      throw new Error('Respuesta del servidor sin contenido válido.')
     }
 
     return data.reply
 
   } catch (error) {
-    // No exponer la URL interna al usuario
     if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
       throw new Error('No se puede conectar con el servidor. Por favor, intentá más tarde.')
     }

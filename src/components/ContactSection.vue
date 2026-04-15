@@ -4,25 +4,73 @@
     <div class="contact-container">
       <div class="contact-form">
         <p>Completá el formulario de contacto:</p>
-        <iframe
-          :key="iframeKey"
-          src="https://docs.google.com/forms/d/e/1FAIpQLSdoMGR5J3K2Nb2yzMlSeq5_5HWXVHojY8TwCTPCRmvnUwXXMw/viewform?embedded=true&usp=sf_link"
-          loading="lazy"
-        >
-          Cargando…
-        </iframe>
+        <form @submit.prevent="handleSubmit" class="contact-form-fields">
+          <div class="field-group">
+            <label for="nombre">Nombre *</label>
+            <input id="nombre" type="text" v-model="form.nombre" required />
+          </div>
+
+          <div class="field-group">
+            <label for="correo">Correo electrónico *</label>
+            <input id="correo" type="email" v-model="form.correo" required />
+          </div>
+
+          <div class="field-group">
+            <label for="telefono">Número de teléfono</label>
+            <input id="telefono" type="tel" v-model="form.telefono" />
+          </div>
+
+          <div class="field-group">
+            <label for="solicitud">Solicitud de Servicio *</label>
+            <textarea id="solicitud" v-model="form.solicitud" rows="5" required></textarea>
+          </div>
+
+          <button type="submit" :disabled="loading">Enviar</button>
+          <p class="status success" v-if="status === 'success'">¡Solicitud enviada correctamente!</p>
+          <p class="status error" v-if="status === 'error'">Ocurrió un error. Intenta de nuevo más tarde.</p>
+          <p class="status" v-if="status === 'validation'">Por favor completa todos los campos obligatorios.</p>
+        </form>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
+import { sendContactForm } from '../services/contactService'
 
-const iframeKey = ref(0)
-onMounted(() => {
-  iframeKey.value++
+const form = ref({
+  nombre: '',
+  correo: '',
+  telefono: '',
+  solicitud: ''
 })
+
+const status = ref(null)
+const loading = ref(false)
+
+const handleSubmit = async () => {
+  status.value = null
+
+  if (!form.value.nombre || !form.value.correo || !form.value.solicitud) {
+    status.value = 'validation'
+    return
+  }
+
+  loading.value = true
+
+  try {
+    await sendContactForm(form.value)
+
+    status.value = 'success'
+    form.value = { nombre: '', correo: '', telefono: '', solicitud: '' }
+  } catch (error) {
+    console.error('Error al enviar el formulario de contacto:', error)
+    status.value = 'error'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -30,18 +78,68 @@ section {
   padding: 5rem 5%;
 }
 
-iframe {
-  width: 100%;
-  height: 900px;
+.contact-form-fields {
+  display: grid;
+  gap: 1rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-group label {
+  margin-bottom: 0.4rem;
+  color: #f0f0f0;
+  font-weight: 600;
+}
+
+.field-group input,
+.field-group textarea {
+  padding: 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+button[type="submit"] {
+  width: 160px;
+  background: #000000;
+  color: #ffffff;
+  padding: 0.8rem 1.2rem;
   border: none;
-  border-radius: 20px;
-  background: white;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.status {
+  margin-top: 0.8rem;
+}
+
+.status.success {
+  color: #70db70;
+}
+
+.status.error,
+.status.validation {
+  color: #ff6f6f;
 }
 
 @media (max-width: 768px) {
-  iframe {
-    height: 1000px;
+  .contact-form {
+    padding: 1.2rem;
   }
 }
 
